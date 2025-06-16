@@ -1,94 +1,403 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Login de Usuario</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 40px;
-      background: #f4f4f4;
-    }
-    form {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      max-width: 300px;
-      margin: auto;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    input {
-      width: 100%;
-      padding: 8px;
-      margin-top: 10px;
-      box-sizing: border-box;
-    }
-    button {
-      margin-top: 15px;
-      padding: 10px;
-      width: 100%;
-      background: #007BFF;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    #message {
-      margin-top: 20px;
-      text-align: center;
-      font-weight: bold;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>Panel de Acceso</title>
+<style>
+body { font-family: Arial, sans-serif; padding: 40px; background: #f4f4f4; }
+form, .panel, .productos, .usuarios { background: white; padding: 20px; border-radius: 8px; margin: 20px auto; max-width: 700px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+input, button, select { width: 100%; padding: 8px; margin-top: 10px; box-sizing: border-box; }
+button { background: #007BFF; color: white; border: none; border-radius: 4px; cursor: pointer; }
+button:hover { background: #0056b3; }
+.btn-edit { background: #28a745; }
+.btn-delete { background: #dc3545; }
+#message { margin-top: 10px; font-weight: bold; text-align: center; }
+table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+th { background-color: #f2f2f2; }
+.hidden { display: none; }
+.actions { display: flex; gap: 5px; }
+.actions button { padding: 5px 10px; }
+</style>
 </head>
 <body>
 
-  <form id="loginForm" autocomplete="off">
-    <h2>Iniciar Sesión</h2>
-    <input type="text" id="username" placeholder="Usuario" required />
-    <input type="password" id="password" placeholder="Contraseña" required />
-    <button type="submit">Ingresar</button>
-    <div id="message"></div>
-  </form>
+<!-- Formulario de Login -->
+<form id="loginForm">
+<h2>Iniciar Sesión</h2>
+<input type="text" id="email" placeholder="Correo electrónico" required />
+<input type="password" id="password" placeholder="Contraseña" required />
+<button type="submit">Ingresar</button>
+<div id="message"></div>
+</form>
 
-  <script>
-    document.getElementById('loginForm').addEventListener('submit', async function(event) {
-      event.preventDefault();
+<!-- Sección de Productos -->
+<div id="productosPanel" class="productos hidden">
+<h2>Productos Disponibles</h2>
+<table>
+<thead><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Precio</th><th>Acciones</th></tr></thead>
+<tbody id="productosBody"></tbody>
+</table>
+</div>
 
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
+<!-- Sección de CRUD Productos (para adminP) -->
+<div id="crudProductos" class="panel hidden">
+<h2>CRUD de Productos (adminP)</h2>
+<form id="productoForm">
+<input type="hidden" id="productoId" value="">
+<input type="text" id="nombreProducto" placeholder="Nombre" required />
+<input type="text" id="descripcionProducto" placeholder="Descripción" />
+<input type="number" id="precioProducto" placeholder="Precio" step="0.01" required />
+<button type="submit" id="productoSubmitBtn">Crear Producto</button>
+<button type="button" id="cancelarEdicionProducto" class="hidden">Cancelar</button>
+</form>
+</div>
 
-      const messageEl = document.getElementById('message');
-      messageEl.textContent = '';
-      messageEl.style.color = '';
+<!-- Sección de Usuarios -->
+<div id="usuariosPanel" class="usuarios hidden">
+<h2>Usuarios Registrados</h2>
+<table>
+<thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Acciones</th></tr></thead>
+<tbody id="usuariosBody"></tbody>
+</table>
+</div>
 
-      try {
-        const response = await fetch('http://localhost:5000/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
+<!-- Sección de CRUD Usuarios (para admin) -->
+<div id="crudUsuarios" class="panel hidden">
+<h2>CRUD de Usuarios (admin)</h2>
+<form id="usuarioForm">
+<input type="hidden" id="usuarioId" value="">
+<input type="text" id="usernameUsuario" placeholder="Username" required />
+<input type="text" id="correoUsuario" placeholder="Correo electrónico" required />
+<input type="password" id="claveUsuario" placeholder="Contraseña" required />
+<button type="submit" id="usuarioSubmitBtn">Crear Usuario</button>
+<button type="button" id="cancelarEdicionUsuario" class="hidden">Cancelar</button>
+</form>
+</div>
 
-        const data = await response.json();
+<script>
+const loginForm = document.getElementById('loginForm');
+const productosPanel = document.getElementById('productosPanel');
+const productosBody = document.getElementById('productosBody');
+const crudProductos = document.getElementById('crudProductos');
+const crudUsuarios = document.getElementById('crudUsuarios');
+const usuariosPanel = document.getElementById('usuariosPanel');
+const usuariosBody = document.getElementById('usuariosBody');
+const messageEl = document.getElementById('message');
 
-        if (response.ok) {
-          messageEl.textContent = "✅ Sesión iniciada correctamente.";
-          messageEl.style.color = "green";
-          // Aquí podrías redirigir al usuario o guardar token, etc.
-        } else {
-          messageEl.textContent = data.message || "❌ Credenciales inválidas.";
-          messageEl.style.color = "red";
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        messageEl.textContent = "❌ Error de conexión con el servidor.";
-        messageEl.style.color = "red";
+// Variables para almacenar el token y rol del usuario
+let authToken = '';
+let userRole = '';
+
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  messageEl.textContent = '';
+  productosPanel.classList.add('hidden');
+  crudProductos.classList.add('hidden');
+  crudUsuarios.classList.add('hidden');
+  usuariosPanel.classList.add('hidden');
+  productosBody.innerHTML = '';
+  usuariosBody.innerHTML = '';
+
+  try {
+    const res = await fetch('http://localhost:5002/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, password})
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      messageEl.textContent = data.message;
+      messageEl.style.color = 'green';
+      authToken = data.token || '';
+      userRole = data.role || '';
+      
+
+      // Mostrar productos solo si NO es admin
+      if (data.products && Array.isArray(data.products) && userRole !== 'admin') {
+        renderProductos(data.products);
+        productosPanel.classList.remove('hidden');
+      }
+
+      
+      // Si es admin, cargar usuarios
+      if (userRole === 'admin') {
+        cargarUsuarios();
+        usuariosPanel.classList.remove('hidden');
+        crudUsuarios.classList.remove('hidden');
+      } else if (userRole === 'adminP') {
+        cargarProductos();
+        crudProductos.classList.remove('hidden');
+      }
+
+    } else {
+      messageEl.textContent = data.message || "Credenciales inválidas.";
+      messageEl.style.color = 'red';
+    }
+  } catch (err) {
+    console.error(err);
+    messageEl.textContent = 'Error de conexión.';
+    messageEl.style.color = 'red';
+  }
+});
+
+function renderProductos(productos) {
+  productosBody.innerHTML = '';
+  productos.forEach(p => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${p.id}</td>
+      <td>${p.name}</td>
+      <td>${p.description || '-'}</td>
+      <td>$${p.price.toFixed(2)}</td>
+      <td class="actions">
+        ${userRole === 'adminP' ? `
+          <button class="btn-edit" onclick="editarProducto(${p.id})">Editar</button>
+          <button class="btn-delete" onclick="eliminarProducto(${p.id})">Eliminar</button>
+        ` : ''}
+      </td>
+    `;
+    productosBody.appendChild(row);
+  });
+}
+
+
+// Función para cargar productos desde el servidor
+async function cargarProductos() {
+  try {
+    const res = await fetch('http://localhost:5001/products', {
+      headers: {
+        'Authorization': `Bearer ${authToken}`
       }
     });
-  </script>
+    if (res.ok) {
+      const productos = await res.json();
+      renderProductos(productos);
+    }
+  } catch (err) {
+    console.error('Error al cargar productos:', err);
+  }
+}
 
+// Función para editar producto
+async function editarProducto(id) {
+  try {
+    const res = await fetch(`http://localhost:5001/products/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+    if (res.ok) {
+      const producto = await res.json();
+      document.getElementById('productoId').value = producto.id;
+      document.getElementById('nombreProducto').value = producto.name;
+      document.getElementById('descripcionProducto').value = producto.description || '';
+      document.getElementById('precioProducto').value = producto.price;
+      document.getElementById('productoSubmitBtn').textContent = 'Actualizar Producto';
+      document.getElementById('cancelarEdicionProducto').classList.remove('hidden');
+    }
+  } catch (err) {
+    console.error('Error al cargar producto para editar:', err);
+  }
+}
+
+// Función para eliminar producto
+async function eliminarProducto(id) {
+  if (!confirm('¿Estás seguro de que deseas eliminar este producto?')) return;
+  
+  try {
+    const res = await fetch(`http://localhost:5001/products/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+    if (res.ok) {
+      alert('Producto eliminado exitosamente');
+      cargarProductos();
+    } else {
+      alert('Error al eliminar producto');
+    }
+  } catch (err) {
+    console.error('Error al eliminar producto:', err);
+    alert('Error de red al eliminar producto');
+  }
+}
+
+// Formulario de productos
+document.getElementById('productoForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('productoId').value;
+  const nombre = document.getElementById('nombreProducto').value.trim();
+  const descripcion = document.getElementById('descripcionProducto').value.trim();
+  const precio = parseFloat(document.getElementById('precioProducto').value);
+
+  const productoData = { name: nombre, description: descripcion, price: precio };
+  const url = id ? `http://localhost:5001/products/${id}` : 'http://localhost:5001/products';
+  const method = id ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
+      },
+      body: JSON.stringify(productoData)
+    });
+    
+    if (res.ok) {
+      alert(id ? '✅ Producto actualizado exitosamente.' : '✅ Producto creado exitosamente.');
+      resetProductoForm();
+      cargarProductos();
+    } else {
+      alert('❌ Error al procesar producto.');
+    }
+  } catch (err) {
+    alert('❌ Error de red al procesar producto.');
+  }
+});
+
+// Cancelar edición de producto
+document.getElementById('cancelarEdicionProducto').addEventListener('click', resetProductoForm);
+
+function resetProductoForm() {
+  document.getElementById('productoForm').reset();
+  document.getElementById('productoId').value = '';
+  document.getElementById('productoSubmitBtn').textContent = 'Crear Producto';
+  document.getElementById('cancelarEdicionProducto').classList.add('hidden');
+}
+
+// Función para renderizar usuarios en la tabla
+function renderUsuarios(usuarios) {
+  usuariosBody.innerHTML = '';
+  usuarios.forEach(u => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${u.id}</td>
+      <td>${u.username}</td>
+      <td>${u.email}</td>
+      <td class="actions">
+        <button class="btn-edit" onclick="editarUsuario(${u.id})">Editar</button>
+        <button class="btn-delete" onclick="eliminarUsuario(${u.id})">Eliminar</button>
+      </td>
+    `;
+    usuariosBody.appendChild(row);
+  });
+}
+
+// Función para cargar usuarios desde el servidor
+async function cargarUsuarios() {
+  try {
+    const res = await fetch('http://localhost:5000/users', {
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+    if (res.ok) {
+      const usuarios = await res.json();
+      renderUsuarios(usuarios);
+    }
+  } catch (err) {
+    console.error('Error al cargar usuarios:', err);
+  }
+}
+
+// Función para editar usuario
+async function editarUsuario(id) {
+  try {
+    const res = await fetch(`http://localhost:5000/users/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+    if (res.ok) {
+      const usuario = await res.json();
+      document.getElementById('usuarioId').value = usuario.id;
+      document.getElementById('usernameUsuario').value = usuario.username;
+      document.getElementById('correoUsuario').value = usuario.email;
+      document.getElementById('claveUsuario').value = '';
+      document.getElementById('usuarioSubmitBtn').textContent = 'Actualizar Usuario';
+      document.getElementById('cancelarEdicionUsuario').classList.remove('hidden');
+    }
+  } catch (err) {
+    console.error('Error al cargar usuario para editar:', err);
+  }
+}
+
+// Función para eliminar usuario
+async function eliminarUsuario(id) {
+  if (!confirm('¿Estás seguro de que deseas eliminar este usuario?')) return;
+  
+  try {
+    const res = await fetch(`http://localhost:5000/users/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+    if (res.ok) {
+      alert('Usuario eliminado exitosamente');
+      cargarUsuarios();
+    } else {
+      alert('Error al eliminar usuario');
+    }
+  } catch (err) {
+    console.error('Error al eliminar usuario:', err);
+    alert('Error de red al eliminar usuario');
+  }
+}
+
+// Formulario de usuarios
+document.getElementById('usuarioForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('usuarioId').value;
+  const username = document.getElementById('usernameUsuario').value.trim();
+  const email = document.getElementById('correoUsuario').value.trim();
+  const password = document.getElementById('claveUsuario').value;
+
+  const usuarioData = { username, email };
+  if (password) usuarioData.password = password;
+  
+  const url = id ? `http://localhost:5000/users/${id}` : 'http://localhost:5000/users';
+  const method = id ? 'PUT' : 'POST';
+
+  try {
+    const res = await fetch(url, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
+      },
+      body: JSON.stringify(usuarioData)
+    });
+    
+    if (res.ok) {
+      alert(id ? '✅ Usuario actualizado exitosamente.' : '✅ Usuario creado exitosamente.');
+      resetUsuarioForm();
+      cargarUsuarios();
+    } else {
+      alert('❌ Error al procesar usuario.');
+    }
+  } catch (err) {
+    alert('❌ Error de red al procesar usuario.');
+  }
+});
+
+// Cancelar edición de usuario
+document.getElementById('cancelarEdicionUsuario').addEventListener('click', resetUsuarioForm);
+
+function resetUsuarioForm() {
+  document.getElementById('usuarioForm').reset();
+  document.getElementById('usuarioId').value = '';
+  document.getElementById('usuarioSubmitBtn').textContent = 'Crear Usuario';
+  document.getElementById('cancelarEdicionUsuario').classList.add('hidden');
+}
+</script>
 </body>
 </html>
