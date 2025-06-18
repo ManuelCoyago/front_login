@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Panel de Acceso</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Formulario de Login -->
+<form id="loginForm">
+  <h2>Iniciar Sesión</h2>
+  <input type="text" id="email" placeholder="Correo electrónico" required />
+  <input type="password" id="password" placeholder="Contraseña" required />
+  <button type="submit" class="btn-primary">Ingresar</button>
+  <div id="message" class="message"></div>
+</form>
+
+<!-- Sección de Productos -->
+<div id="productosPanel" class="productos hidden">
+  <h2>Productos Disponibles</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Descripción</th>
+        <th>Precio</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="productosBody"></tbody>
+  </table>
+</div>
+
+<!-- Sección de CRUD Productos (para adminP) -->
+<div id="crudProductos" class="panel hidden">
+  <h2>Administrar Productos</h2>
+  <form id="productoForm">
+    <input type="hidden" id="productoId" value="">
+    <input type="text" id="nombreProducto" placeholder="Nombre" required />
+    <input type="text" id="descripcionProducto" placeholder="Descripción" />
+    <input type="number" id="precioProducto" placeholder="Precio" step="0.01" required />
+    <div class="button-group">
+      <button type="submit" id="productoSubmitBtn" class="btn-primary">Crear Producto</button>
+      <button type="button" id="cancelarEdicionProducto" class="btn-delete hidden">Cancelar</button>
+    </div>
+  </form>
+</div>
+
+<!-- Sección de Usuarios -->
+<div id="usuariosPanel" class="usuarios hidden">
+  <h2>Usuarios Registrados</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody id="usuariosBody"></tbody>
+  </table>
+</div>
+
+<!-- Sección de CRUD Usuarios (para admin) -->
+<div id="crudUsuarios" class="panel hidden">
+  <h2>Administrar Usuarios</h2>
+  <form id="usuarioForm">
+    <input type="hidden" id="usuarioId" value="">
+    <input type="text" id="usernameUsuario" placeholder="Username" required />
+    <input type="text" id="correoUsuario" placeholder="Correo electrónico" required />
+    <input type="password" id="claveUsuario" placeholder="Contraseña" required />
+    
+    <div class="form-group">
+      <label for="rolUsuario">Rol:</label>
+      <select id="rolUsuario" required>
+        <option value="">Seleccione un rol</option>
+        <option value="admin">Administrador</option>
+        <option value="adminP">Admin Productos</option>
+        <option value="user">Usuario Normal</option>
+      </select>
+    </div>
+    
+    <div class="button-group">
+      <button type="submit" id="usuarioSubmitBtn" class="btn-primary">Crear Usuario</button>
+      <button type="button" id="cancelarEdicionUsuario" class="btn-delete hidden">Cancelar</button>
+    </div>
+  </form>
+</div>
+
+<script src="productos.js"></script>
+<script src="usuarios.js"></script>
+
+<script>
+// Variables globales compartidas
+let authToken = '';
+let userRole = '';
+
+const loginForm = document.getElementById('loginForm');
+const productosPanel = document.getElementById('productosPanel');
+const usuariosPanel = document.getElementById('usuariosPanel');
+const crudProductos = document.getElementById('crudProductos');
+const crudUsuarios = document.getElementById('crudUsuarios');
+const messageEl = document.getElementById('message');
+
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+
+  // Limpiar mensajes y UI
+  messageEl.textContent = '';
+  messageEl.className = 'message';
+  productosPanel.classList.add('hidden');
+  crudProductos.classList.add('hidden');
+  crudUsuarios.classList.add('hidden');
+  usuariosPanel.classList.add('hidden');
+  
+  // Mostrar loader
+  messageEl.innerHTML = '<div class="loader"></div>';
+
+  try {
+    const res = await fetch('http://localhost:5002/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, password})
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      // Login exitoso
+      messageEl.textContent = data.message || 'Inicio de sesión exitoso';
+      messageEl.className = 'message success';
+      
+      authToken = data.token || '';
+      userRole = data.role || '';
+      
+      // Ocultar mensaje después de 2 segundos
+      setTimeout(() => {
+        messageEl.textContent = '';
+        messageEl.className = 'message';
+      }, 2000);
+
+      // Mostrar secciones según rol
+      if (data.products && Array.isArray(data.products) && userRole !== 'admin') {
+        renderProductos(data.products);
+        productosPanel.classList.remove('hidden');
+      }
+      
+      if (userRole === 'admin') {
+        cargarUsuarios();
+        usuariosPanel.classList.remove('hidden');
+        crudUsuarios.classList.remove('hidden');
+      } else if (userRole === 'adminP') {
+        cargarProductos();
+        crudProductos.classList.remove('hidden');
+      }
+
+    } else {
+      // Credenciales incorrectas
+      messageEl.textContent = data.message || 'Credenciales incorrectas. Por favor intenta nuevamente.';
+      messageEl.className = 'message error';
+      
+      // Limpiar campo de contraseña
+      document.getElementById('password').value = '';
+      
+      // Enfocar el campo de email
+      document.getElementById('email').focus();
+    }
+  } catch (err) {
+    console.error(err);
+    messageEl.textContent = 'Error de conexión con el servidor. Intente nuevamente.';
+    messageEl.className = 'message error';
+  }
+});
+</script>
+</body>
+</html>
