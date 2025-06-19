@@ -1,4 +1,3 @@
-// Funciones relacionadas con productos
 function renderProductos(productos) {
   const productosBody = document.getElementById('productosBody');
   productosBody.innerHTML = '';
@@ -13,7 +12,7 @@ function renderProductos(productos) {
         ${userRole === 'adminP' ? `
           <button class="btn-edit" onclick="editarProducto(${p.id})">Editar</button>
           <button class="btn-delete" onclick="eliminarProducto(${p.id})">Eliminar</button>
-        ` : ''}
+        ` : 'Sin acciones disponibles'}
       </td>
     `;
     productosBody.appendChild(row);

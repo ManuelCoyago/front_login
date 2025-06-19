@@ -1,17 +1,19 @@
-// Función para renderizar usuarios en la tabla
 function renderUsuarios(usuarios) {
   const usuariosBody = document.getElementById('usuariosBody');
   usuariosBody.innerHTML = '';
+  
   usuarios.forEach(u => {
     const row = document.createElement('tr');
     row.innerHTML = `
       <td>${u.id}</td>
       <td>${u.username}</td>
       <td>${u.email}</td>
-      <td>${u.role}</td>
+      <td>${u.role || 'user'}</td>
       <td class="actions">
-        <button class="btn-edit" onclick="editarUsuario(${u.id})">Editar</button>
-        <button class="btn-delete" onclick="eliminarUsuario(${u.id})">Eliminar</button>
+        ${userRole === 'admin' ? `
+          <button class="btn-edit" onclick="editarUsuario(${u.id})">Editar</button>
+          <button class="btn-delete" onclick="eliminarUsuario(${u.id})">Eliminar</button>
+        ` : '<span class="no-actions">-</span>'}
       </td>
     `;
     usuariosBody.appendChild(row);
@@ -79,6 +81,9 @@ async function eliminarUsuario(id) {
     alert('Error de red al eliminar usuario');
   }
 }
+
+
+
 
 // Formulario de usuarios
 document.getElementById('usuarioForm').addEventListener('submit', async (e) => {
