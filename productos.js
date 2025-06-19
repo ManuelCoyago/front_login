@@ -1,4 +1,7 @@
-function renderProductos(productos) {
+// productos.js
+import { authToken, userRole } from './auth.js';
+
+export function renderProductos(productos) {
   const productosBody = document.getElementById('productosBody');
   productosBody.innerHTML = '';
   productos.forEach(p => {
@@ -19,8 +22,7 @@ function renderProductos(productos) {
   });
 }
 
-// Función para cargar productos desde el servidor
-async function cargarProductos() {
+export async function cargarProductos() {
   try {
     const res = await fetch('http://localhost:5001/products', {
       headers: {
@@ -36,8 +38,7 @@ async function cargarProductos() {
   }
 }
 
-// Función para editar producto
-async function editarProducto(id) {
+window.editarProducto = async function (id) {
   try {
     const res = await fetch(`http://localhost:5001/products/${id}`, {
       headers: {
@@ -56,12 +57,11 @@ async function editarProducto(id) {
   } catch (err) {
     console.error('Error al cargar producto para editar:', err);
   }
-}
+};
 
-// Función para eliminar producto
-async function eliminarProducto(id) {
+window.eliminarProducto = async function (id) {
   if (!confirm('¿Estás seguro de que deseas eliminar este producto?')) return;
-  
+
   try {
     const res = await fetch(`http://localhost:5001/products/${id}`, {
       method: 'DELETE',
@@ -79,9 +79,8 @@ async function eliminarProducto(id) {
     console.error('Error al eliminar producto:', err);
     alert('Error de red al eliminar producto');
   }
-}
+};
 
-// Formulario de productos
 document.getElementById('productoForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const id = document.getElementById('productoId').value;
@@ -102,9 +101,9 @@ document.getElementById('productoForm').addEventListener('submit', async (e) => 
       },
       body: JSON.stringify(productoData)
     });
-    
+
     if (res.ok) {
-      alert(id ? '✅ Producto actualizado exitosamente.' : '✅ Producto creado exitosamente.');
+      alert(id ? '✅ Producto actualizado' : '✅ Producto creado');
       resetProductoForm();
       cargarProductos();
     } else {
@@ -115,7 +114,6 @@ document.getElementById('productoForm').addEventListener('submit', async (e) => 
   }
 });
 
-// Cancelar edición de producto
 document.getElementById('cancelarEdicionProducto').addEventListener('click', resetProductoForm);
 
 function resetProductoForm() {
@@ -124,3 +122,5 @@ function resetProductoForm() {
   document.getElementById('productoSubmitBtn').textContent = 'Crear Producto';
   document.getElementById('cancelarEdicionProducto').classList.add('hidden');
 }
+
+

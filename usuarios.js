@@ -1,7 +1,10 @@
-function renderUsuarios(usuarios) {
+// usuarios.js
+import { authToken, userRole } from './auth.js';
+
+export function renderUsuarios(usuarios) {
   const usuariosBody = document.getElementById('usuariosBody');
   usuariosBody.innerHTML = '';
-  
+
   usuarios.forEach(u => {
     const row = document.createElement('tr');
     row.innerHTML = `
@@ -20,8 +23,7 @@ function renderUsuarios(usuarios) {
   });
 }
 
-// Función para cargar usuarios desde el servidor
-async function cargarUsuarios() {
+export async function cargarUsuarios() {
   try {
     const res = await fetch('http://localhost:5003/users', {
       headers: {
@@ -37,12 +39,10 @@ async function cargarUsuarios() {
   }
 }
 
-
-// Función para editar usuario
-async function editarUsuario(id) {
+window.editarUsuario = async function (id) {
   try {
     const res = await fetch(`http://localhost:5003/users/${id}`, {
-      headers: {'Authorization': `Bearer ${authToken}`}
+      headers: { 'Authorization': `Bearer ${authToken}` }
     });
     if (res.ok) {
       const usuario = await res.json();
@@ -57,12 +57,11 @@ async function editarUsuario(id) {
   } catch (err) {
     console.error('Error al cargar usuario:', err);
   }
-}
+};
 
-// Función para eliminar usuario
-async function eliminarUsuario(id) {
+window.eliminarUsuario = async function (id) {
   if (!confirm('¿Estás seguro de que deseas eliminar este usuario?')) return;
-  
+
   try {
     const res = await fetch(`http://localhost:5003/users/${id}`, {
       method: 'DELETE',
@@ -80,12 +79,8 @@ async function eliminarUsuario(id) {
     console.error('Error al eliminar usuario:', err);
     alert('Error de red al eliminar usuario');
   }
-}
+};
 
-
-
-
-// Formulario de usuarios
 document.getElementById('usuarioForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const id = document.getElementById('usuarioId').value;
@@ -96,7 +91,7 @@ document.getElementById('usuarioForm').addEventListener('submit', async (e) => {
 
   const usuarioData = { username, email, role };
   if (password) usuarioData.password = password;
-  
+
   const url = id ? `http://localhost:5003/users/${id}` : 'http://localhost:5003/users';
   const method = id ? 'PUT' : 'POST';
 
@@ -109,7 +104,7 @@ document.getElementById('usuarioForm').addEventListener('submit', async (e) => {
       },
       body: JSON.stringify(usuarioData)
     });
-    
+
     if (res.ok) {
       alert(id ? '✅ Usuario actualizado' : '✅ Usuario creado');
       resetUsuarioForm();
@@ -123,7 +118,6 @@ document.getElementById('usuarioForm').addEventListener('submit', async (e) => {
   }
 });
 
-// Cancelar edición de usuario
 document.getElementById('cancelarEdicionUsuario').addEventListener('click', resetUsuarioForm);
 
 function resetUsuarioForm() {
@@ -132,3 +126,4 @@ function resetUsuarioForm() {
   document.getElementById('usuarioSubmitBtn').textContent = 'Crear Usuario';
   document.getElementById('cancelarEdicionUsuario').classList.add('hidden');
 }
+
