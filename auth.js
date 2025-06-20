@@ -116,15 +116,19 @@ async function save2FASecret(secret) {
   return true;
 }
 
-// Función auxiliar para limpiar la UI antes del login
-function resetUI() {
-  messageEl.textContent = '';
-  messageEl.className = 'message';
+export function resetUI() {
   document.getElementById('productosPanel').classList.add('hidden');
   document.getElementById('crudProductos').classList.add('hidden');
   document.getElementById('usuariosPanel').classList.add('hidden');
   document.getElementById('crudUsuarios').classList.add('hidden');
+  document.getElementById('2fa-section').classList.add('hidden');
+  document.getElementById('message').textContent = '';
+  document.getElementById('message').className = 'message';
+  document.getElementById('loginForm').reset();
+
 }
+
+
 
 // Exporta para que `main.js` pueda acceder
 export function showPostLogin(data) {
@@ -133,4 +137,7 @@ export function showPostLogin(data) {
   messageEl.textContent = 'Acceso concedido';
   messageEl.className = 'message success';
   document.dispatchEvent(new CustomEvent('loginSuccess', { detail: data }));
+  document.getElementById('logoutBtn').classList.remove('hidden');
+  document.getElementById('loginForm').classList.add('hidden');
+
 }

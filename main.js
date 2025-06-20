@@ -2,7 +2,7 @@
 import { authToken, userRole, showPostLogin } from './auth.js';
 import { cargarUsuarios, renderUsuarios } from './usuarios.js';
 import { cargarProductos, renderProductos } from './productos.js';
-
+import { resetUI } from './auth.js';
 
 document.addEventListener('loginSuccess', (event) => {
   const data = event.detail;
@@ -23,3 +23,12 @@ document.addEventListener('loginSuccess', (event) => {
     }
   }
 });
+
+
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  resetUI();
+  document.getElementById('loginForm').classList.remove('hidden');
+  document.getElementById('logoutBtn').classList.add('hidden');
+});
+
